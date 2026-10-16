@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>広島県市町ゲーム</title>
+<meta name="description" content="広島県の市区町を箱に詰めて、となり同士をくっつけるパズルゲーム。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Zen+Maru+Gothic:wght@700&display=swap">
+<style>
+:root {
+  --bg: #e6ecea; --paper: #f8faf9; --ink: #22343c; --muted: #5f7179; --accent: #2f6f8f; --box: #5f88a0; --line: #c9d3d3;
+  --f-display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); }
+body { padding: env(safe-area-inset-top, 0px) max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px));
+  overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#app { height: 100%; max-width: 480px; margin: 0 auto; display: grid; grid-template-rows: minmax(0, 1fr) auto auto; gap: 8px; padding-block: 8px; }
+#stage { position: relative; min-height: 0; display: grid; place-items: center; }
+#cv { display: block; background: var(--paper); border-radius: 12px; box-shadow: 0 1px 0 var(--line); touch-action: none; }
+.buttons { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 8px; }
+#mapBtn { background: var(--paper); color: var(--accent); border: 2px solid var(--accent); }
+.map-card { width: min(100%, 360px); max-height: 100%; overflow-y: auto; gap: 8px; padding: 12px 12px 12px; }
+.map-card h2 { font-size: 1.1rem; }
+.map-card canvas { width: 100%; display: block; border-radius: 6px; }
+.map-status { margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: .8rem; }
+.map-status div { display: flex; gap: 5px; align-items: center; }
+.map-status dt { color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.map-status dd { margin: 0; font-weight: 700; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid rgba(34,52,60,.5); }
+.sw.now { background: #2f6f8f; }
+.sw.next { background: #fff; border: 2px dashed var(--ink); }
+.sw.todo { background: #f2f0ea; }
+.inset-title { margin: 2px 0 -2px; font-size: .75rem; color: var(--muted); text-align: center; }
+.buttons button { font: 700 1rem var(--f-body); border-radius: 12px; padding: 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+#reset { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); }
+#shake { background: var(--ink); color: var(--paper); border: 2px solid var(--ink); }
+.buttons button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; }
+.card { width: min(100%, 300px); background: var(--paper); border: 2px solid var(--ink); border-radius: 14px; padding: 18px 16px 16px; display: grid; gap: 12px; box-shadow: 0 8px 30px rgba(34,52,60,.18); }
+.card h1, .card h2 { font-family: var(--f-display); margin: 0; text-align: center; letter-spacing: .03em; }
+.card h1 { font-size: 1.7rem; }
+.card h2 { font-size: 1.35rem; }
+.card .sub { margin: -6px 0 0; text-align: center; color: var(--muted); font-size: .82rem; }
+#titleArt { width: 100%; height: 92px; display: block; }
+.rules { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .86rem; }
+.rules li { display: flex; gap: 8px; align-items: baseline; }
+.rules li::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--accent); flex: none; transform: translateY(-1px); }
+.primary { font: 700 1.05rem var(--f-body); background: var(--ink); color: var(--paper); border: 0; border-radius: 10px; padding: 13px; cursor: pointer; text-align: center; text-decoration: none; }
+.secondary { font: 700 .95rem var(--f-body); background: transparent; color: var(--ink); border: 2px solid var(--ink); border-radius: 10px; padding: 10px; text-align: center; text-decoration: none; }
+.result { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: .9rem; }
+.result dt { color: var(--muted); }
+.result dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.big { font-family: var(--f-display); font-size: 2.4rem; text-align: center; margin: 0; line-height: 1.1; }
+.big small { font-size: 1rem; }
+.reason { text-align: center; color: #b4473a; font-weight: 700; margin: -6px 0 0; font-size: .9rem; }
+footer { text-align: center; font-size: .66rem; color: var(--muted); line-height: 1.4; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main id="app">
+  <div id="stage">
+    <canvas id="cv" aria-label="ゲーム画面"></canvas>
+    <div id="title" class="overlay">
+      <div class="card">
+        <h1>広島県市町ゲーム</h1>
+        <p class="sub">広島県の市区町を箱に詰めよう</p>
+        <canvas id="titleArt" aria-hidden="true"></canvas>
+        <ul class="rules">
+          <li>となりの市区町同士がくっつく</li>
+          <li>シャッフルで箱をゆらせる</li>
+          <li>あふれたら終わり</li>
+          <li>場所がわからなければマップで確認</li>
+          <li>30 市区町つなげて広島県にすると次の周へ</li>
+        </ul>
+        <button id="start" class="primary" type="button">スタート</button>
+      </div>
+    </div>
+    <div id="over" class="overlay" hidden>
+      <div class="card">
+        <h2>ゲームオーバー</h2>
+        <p class="reason" id="overReason"></p>
+        <p class="big"><span id="overScore">0</span><small> 点</small></p>
+        <dl class="result">
+          <dt>最大</dt><dd id="overBig">-</dd>
+          <dt>周</dt><dd><span id="overRound">1</span> 周目</dd>
+          <dt>ベスト</dt><dd><span id="overBest">0</span> 点</dd>
+        </dl>
+        <button id="again" class="primary" type="button">もう一度</button>
+        <a id="share" class="secondary" href="#" target="_blank" rel="noopener">X でシェア</a>
+      </div>
+    </div>
+    <div id="map" class="overlay" hidden>
+      <div class="card map-card" role="dialog" aria-label="広島県の地図">
+        <h2>広島県の地図</h2>
+        <dl class="map-status" id="mapStatus">
+          <div><dt><i class="sw now"></i>いまの</dt><dd id="mapNow">-</dd></div>
+          <div><dt><i class="sw next"></i>つぎ</dt><dd id="mapNext">-</dd></div>
+          <div><dt><i class="sw todo"></i>まだ</dt><dd>うすい色</dd></div>
+        </dl>
+        <canvas id="mapMain" aria-hidden="true"></canvas>
+        <p class="inset-title">広島市のまわり（点線の枠を拡大）</p>
+        <canvas id="mapInset" aria-hidden="true"></canvas>
+        <button id="mapClose" class="primary" type="button">ゲームにもどる</button>
+      </div>
+    </div>
+  </div>
+  <div class="buttons">
+    <button id="reset" type="button">リセット</button>
+    <button id="mapBtn" type="button">マップ</button>
+    <button id="shake" type="button">シャッフル</button>
+  </div>
+  <footer>出典：「国土数値情報（行政区域データ）」（国土交通省）を加工して作成</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+<script src="data.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

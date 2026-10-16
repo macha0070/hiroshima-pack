@@ -1,0 +1,308 @@
+<title>広島県市町ピース比較</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Maru+Gothic:wght@700&display=swap">
+<style>
+/* Layout: one working column; controls bar, then map and box side by side (stack on phones), then checks list */
+:root {
+  --bg: #edf1f0;          /* 瀬戸内の薄曇り */
+  --panel: #f8faf9;
+  --ink: #22343c;
+  --muted: #5f7179;
+  --line: #c9d3d3;
+  --accent: #2f6f8f;      /* 瀬戸内の海 */
+  --warn: #c8473b;
+  --ok: #3c8a5a;
+  --sea: #dfe9ec;
+  --box: #6b8fa8;
+  --r-hiro: #f3c9c1; --r-west: #f2deaa; --r-kure: #bfe0d6; --r-chuo: #d6cdee;
+  --r-bisan: #f5d3ae; --r-fuku: #c8dcf0; --r-bihoku: #d3e7bd;
+  --outline: rgba(40,58,66,.55);
+  --f-display: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #152126; --panel: #1c2b31; --ink: #e3ecee; --muted: #9db0b6; --line: #34484f;
+  --accent: #7fbad6; --warn: #f0806f; --ok: #79c795; --sea: #1a3039; --box: #7fa3bb;
+  --r-hiro: #b98a83; --r-west: #b7a26a; --r-kure: #7fa99c; --r-chuo: #9a8fbf;
+  --r-bisan: #bb9670; --r-fuku: #86a2bd; --r-bihoku: #93ad7c; --outline: rgba(10,20,24,.7);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #152126; --panel: #1c2b31; --ink: #e3ecee; --muted: #9db0b6; --line: #34484f;
+  --accent: #7fbad6; --warn: #f0806f; --ok: #79c795; --sea: #1a3039; --box: #7fa3bb;
+  --r-hiro: #b98a83; --r-west: #b7a26a; --r-kure: #7fa99c; --r-chuo: #9a8fbf;
+  --r-bisan: #bb9670; --r-fuku: #86a2bd; --r-bihoku: #93ad7c; --outline: rgba(10,20,24,.7);
+  color-scheme: dark }
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: var(--f-body); font-size: 14px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: grid; gap: 4px; }
+h1 { font-family: var(--f-display); font-size: 1.6rem; margin: 0; text-wrap: balance; letter-spacing: .02em; }
+.lede { color: var(--muted); margin: 0; max-width: 62ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--accent); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-weight: 700; border: 0; background: transparent; color: var(--accent); padding: 7px 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+.seg button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ctl label { color: var(--muted); font-size: .85rem; }
+.ctl output { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 3.2em; }
+.ctl input[type=range] { width: 130px; accent-color: var(--accent); }
+.ctl small { color: var(--muted); font-size: .75rem; }
+.main { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.card h2 { font-family: var(--f-display); font-size: 1.02rem; margin: 0; }
+.card .sub { color: var(--muted); font-size: .8rem; margin: -6px 0 0; }
+svg { display: block; width: 100%; height: auto; }
+#map .muni { stroke: var(--outline); stroke-width: .6; vector-effect: non-scaling-stroke; cursor: pointer; }
+#map .muni:hover, #map .muni.sel { stroke: var(--ink); stroke-width: 2; }
+#map .hole { fill: none; stroke: var(--warn); stroke-width: 3; vector-effect: non-scaling-stroke; stroke-dasharray: 5 3; }
+#map .lbl { font-size: 2.6px; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; pointer-events: none; paint-order: stroke; stroke: var(--panel); stroke-width: .5px; font-weight: 500; }
+#map .edge { stroke: var(--accent); stroke-width: 1.4; vector-effect: non-scaling-stroke; opacity: .75; }
+#map .edge.sea { stroke-dasharray: 4 3; stroke: var(--warn); }
+#map .dot { fill: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .78rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 11px; height: 11px; border-radius: 3px; border: 1px solid var(--outline); display: inline-block; }
+.legend i.l-sea { border: 0; height: 0; border-top: 2px dashed var(--warn); width: 16px; border-radius: 0; }
+.legend i.l-hole { border: 2px dashed var(--warn); background: transparent; }
+#info { font-size: .85rem; min-height: 3.2em; color: var(--ink); background: var(--sea); border-radius: 8px; padding: 8px 10px; }
+#info b { font-weight: 700; }
+#box .wall { fill: none; stroke: var(--box); stroke-width: 4; }
+#box .inner { fill: var(--panel); }
+#box .over { fill: var(--warn); opacity: .08; }
+#box .rim { stroke: var(--warn); stroke-dasharray: 4 3; stroke-width: 1; }
+#box .pc { stroke: var(--outline); stroke-width: .8; cursor: pointer; fill-rule: evenodd; }
+#box .pc.sel { stroke: var(--ink); stroke-width: 2; }
+#box .plbl { font-size: 7px; text-anchor: middle; dominant-baseline: middle; fill: var(--ink); pointer-events: none; paint-order: stroke; stroke: var(--panel); stroke-width: 1.6px; font-weight: 700; }
+#box .pc.holey { stroke: var(--warn); stroke-width: 1.6; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.stat { background: var(--sea); border-radius: 8px; padding: 8px 10px; }
+.stat b { display: block; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.stat span { font-size: .72rem; color: var(--muted); }
+.checks { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.checks li { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 10px; align-items: start; padding: 9px 11px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); }
+.pill { font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; color: var(--panel); white-space: nowrap; }
+.pill.ng { background: var(--warn); } .pill.ok { background: var(--ok); } .pill.note { background: var(--accent); }
+.checks p { margin: 0; } .checks p small { color: var(--muted); display: block; }
+footer { color: var(--muted); font-size: .75rem; }
+footer a { color: var(--accent); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>広島県市町ピース比較</h1>
+    <p class="lede">都道府県ゲームを広島県の市町で作るときの、ピースの分け方の比較です。地図か箱の中のピースをタップすると、その市町の情報が出ます。</p>
+  </header>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="ピースの分け方">
+      <button id="v23" type="button" aria-pressed="false">23市町</button>
+      <button id="v30" type="button" aria-pressed="true">30ピース（広島市を区に分割）</button>
+    </div>
+    <div class="ctl">
+      <label for="exp">サイズ指数</label>
+      <input id="exp" type="range" min="0.20" max="0.45" step="0.01" value="0.27">
+      <output id="expOut" for="exp">0.27</output>
+      <small>元の日本版は 0.35</small>
+    </div>
+    <div class="ctl">
+      <label for="isl">ピースに入れる島</label>
+      <input id="isl" type="range" min="0" max="60" step="1" value="15">
+      <output id="islOut" for="isl">15</output>
+      <small>km² 以上</small>
+    </div>
+    <div class="ctl">
+      <input id="edges" type="checkbox" checked>
+      <label for="edges">隣接線を表示</label>
+    </div>
+  </div>
+
+  <div class="main">
+    <section class="card">
+      <h2>地図</h2>
+      <p class="sub">色は県の7圏域。線でつながった市町同士が、ゲームでくっつく組み合わせです。</p>
+      <svg id="map" role="img" aria-label="広島県の市町の地図"></svg>
+      <div class="legend" id="legend"></div>
+      <div id="info">市町をタップすると、面積と隣接先が出ます。</div>
+    </section>
+    <section class="card">
+      <h2>ゲームでの大きさ</h2>
+      <p class="sub">元のゲームと同じ箱（300×420）に、最小のピースを元の香川と同じ大きさにして並べたものです。物理演算はなく、大きい順に並べています。</p>
+      <svg id="box" role="img" aria-label="箱の中に並べたピース"></svg>
+      <div class="stats" id="stats"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>この分け方のチェック</h2>
+    <ul class="checks" id="checks"></ul>
+  </section>
+
+  <footer>出典：「国土数値情報（行政区域データ）」（国土交通省）を加工して作成。簡略化データは <a href="https://github.com/smartnews-smri/japan-topography">smartnews-smri/japan-topography</a> を使用。</footer>
+</div>
+
+<script>/*DATA*/</script>
+<script>
+(() => {
+const REGION = {
+  hiro: ['広島市','中区','東区','南区','西区','安佐南区','安佐北区','安芸区','佐伯区','府中町','海田町','熊野町','坂町','安芸高田市','安芸太田町','北広島町'],
+  west: ['大竹市','廿日市市'], kure: ['呉市','江田島市'], chuo: ['東広島市','竹原市','大崎上島町'],
+  bisan: ['三原市','尾道市','世羅町'], fuku: ['福山市','府中市','神石高原町'], bihoku: ['三次市','庄原市'],
+};
+const REGION_NAME = { hiro:'広島', west:'広島西', kure:'呉', chuo:'広島中央', bisan:'尾三', fuku:'福山・府中', bihoku:'備北' };
+const regionOf = n => Object.keys(REGION).find(k => REGION[k].includes(n));
+const BW = 300, BH = 420, REF_SIDE = 0.08925;
+const NS = 'http://www.w3.org/2000/svg';
+const state = { v: '30', exp: 0.27, isl: 15, edges: true, sel: null };
+try { const s = JSON.parse(localStorage.getItem('hp-prev') || '{}'); Object.assign(state, s, { sel: null }); } catch (e) {}
+
+const $ = id => document.getElementById(id);
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+const pts = flat => { const a = []; for (let i = 0; i < flat.length; i += 2) a.push([flat[i], flat[i + 1]]); return a; };
+const path = flat => { let d = ''; for (let i = 0; i < flat.length; i += 2) d += (i ? 'L' : 'M') + flat[i] + ' ' + flat[i + 1]; return d + 'Z'; };
+const centroid = p => { let a = 0, cx = 0, cy = 0; for (let i = 0; i < p.length; i++) { const [x1, y1] = p[i], [x2, y2] = p[(i + 1) % p.length]; const c = x1 * y2 - x2 * y1; a += c; cx += (x1 + x2) * c; cy += (y1 + y2) * c; } return [cx / (3 * a), cy / (3 * a)]; };
+const fmt = (n, d = 1) => n.toLocaleString('ja-JP', { maximumFractionDigits: d, minimumFractionDigits: d });
+
+function pieces() { return state.v === '23' ? DATA.pieces23 : DATA.pieces30; }
+function adjacency() { return state.v === '23' ? DATA.adj23 : DATA.adj30; }
+function totalArea(p) { return p.parts.reduce((s, q) => s + q.a, 0) - (p.holes ? 0 : 0); }
+function keptParts(p) { return p.parts.filter((q, i) => i === 0 || q.a >= state.isl); }
+
+function save() { try { localStorage.setItem('hp-prev', JSON.stringify({ v: state.v, exp: state.exp, isl: state.isl, edges: state.edges })); } catch (e) {} }
+
+// ---------- map ----------
+function drawMap() {
+  const svg = $('map'); svg.textContent = '';
+  const all = pieces();
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const p of all) for (const q of p.parts) for (let i = 0; i < q.p.length; i += 2) { x0 = Math.min(x0, q.p[i]); x1 = Math.max(x1, q.p[i]); y0 = Math.min(y0, q.p[i + 1]); y1 = Math.max(y1, q.p[i + 1]); }
+  const pad = 4; svg.setAttribute('viewBox', `${x0 - pad} ${y0 - pad} ${x1 - x0 + pad * 2} ${y1 - y0 + pad * 2}`);
+  el('rect', { x: x0 - pad, y: y0 - pad, width: x1 - x0 + pad * 2, height: y1 - y0 + pad * 2, fill: 'var(--sea)' }, svg);
+  const g = el('g', {}, svg);
+  const centers = {};
+  for (const p of all) {
+    const d = p.parts.map(q => path(q.p)).join('') + (p.holes || []).map(path).join('');
+    const e = el('path', { d, class: 'muni' + (state.sel === p.name ? ' sel' : ''), fill: `var(--r-${regionOf(p.name)})`, 'fill-rule': 'evenodd' }, g);
+    e.addEventListener('click', () => select(p.name));
+    centers[p.name] = centroid(pts(p.parts[0].p));
+  }
+  centers['広島市'] && (centers['広島市'] = [centers['広島市'][0] - 6, centers['広島市'][1] - 4]);
+  for (const p of all) for (const h of p.holes || []) { if (Math.abs(polyA(pts(h))) > 1) el('path', { d: path(h), class: 'hole' }, svg); }
+  if (state.edges) {
+    const eg = el('g', {}, svg);
+    for (const [a, b] of adjacency()) { const A = centers[a], B = centers[b]; el('line', { x1: A[0], y1: A[1], x2: B[0], y2: B[1], class: 'edge' }, eg); }
+    for (const [a, b] of DATA.sea) { const A = centers[a], B = centers[b]; el('line', { x1: A[0], y1: A[1], x2: B[0], y2: B[1], class: 'edge sea' }, eg); }
+    for (const n in centers) el('circle', { cx: centers[n][0], cy: centers[n][1], r: .9, class: 'dot' }, eg);
+  }
+  for (const p of all) { const [cx, cy] = centers[p.name]; const t = el('text', { x: cx, y: cy + (state.edges ? 2.6 : 0), class: 'lbl' }, svg); t.textContent = p.name; }
+}
+function polyA(p) { let a = 0; for (let i = 0; i < p.length; i++) { const q = p[i], r = p[(i + 1) % p.length]; a += q[0] * r[1] - r[0] * q[1]; } return a / 2; }
+
+function drawLegend() {
+  const L = $('legend'); L.textContent = '';
+  for (const k in REGION_NAME) { const s = document.createElement('span'); s.innerHTML = `<i style="background:var(--r-${k})"></i>${REGION_NAME[k]}`; L.appendChild(s); }
+  const s1 = document.createElement('span'); s1.innerHTML = '<i class="l-sea"></i>海をまたぐ隣接（手で設定）'; L.appendChild(s1);
+  if (state.v === '23') { const s2 = document.createElement('span'); s2.innerHTML = '<i class="l-hole"></i>ピースの穴'; L.appendChild(s2); }
+}
+
+// ---------- box ----------
+function gameScale(p, minA) {
+  // square-equivalent side of the smallest piece = REF_SIDE * BW, others grow with area^exp (same rule as the original)
+  const A = keptParts(p).reduce((s, q) => s + q.a, 0);
+  const side = REF_SIDE * BW * Math.pow(A / minA, state.exp);
+  return { k: side / Math.sqrt(A), A, side };
+}
+function drawBox() {
+  const svg = $('box'); svg.textContent = '';
+  const all = pieces().slice();
+  const minA = Math.min(...all.map(p => keptParts(p).reduce((s, q) => s + q.a, 0)));
+  const items = all.map(p => {
+    const { k, A, side } = gameScale(p, minA);
+    const parts = keptParts(p);
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const q of parts) for (let i = 0; i < q.p.length; i += 2) { x0 = Math.min(x0, q.p[i]); x1 = Math.max(x1, q.p[i]); y0 = Math.min(y0, q.p[i + 1]); y1 = Math.max(y1, q.p[i + 1]); }
+    return { p, k, A, side, parts, bx: x0, by: y0, w: (x1 - x0) * k, h: (y1 - y0) * k };
+  }).sort((a, b) => b.A - a.A);
+  // shelf packing inside the box width
+  const gap = 3; let x = gap, y = gap, rowH = 0;
+  for (const it of items) {
+    if (x + it.w > BW - gap && x > gap) { x = gap; y += rowH + gap; rowH = 0; }
+    it.x = x; it.y = y; x += it.w + gap; rowH = Math.max(rowH, it.h);
+  }
+  const usedH = y + rowH + gap;
+  const H = Math.max(BH, usedH);
+  const M = 6;
+  svg.setAttribute('viewBox', `${-M} ${-M} ${BW + M * 2} ${H + M * 2}`);
+  // the stack grows upward from the floor like in the game: flip rows to sit at the bottom
+  const off = BH - usedH;
+  el('rect', { x: 0, y: Math.min(0, off), width: BW, height: H, class: 'inner' }, svg);
+  if (off < 0) el('rect', { x: 0, y: off, width: BW, height: -off, class: 'over' }, svg);
+  el('line', { x1: 0, y1: 36, x2: BW, y2: 36, class: 'rim' }, svg);
+  const shift = off;
+  svg.setAttribute('viewBox', `${-M} ${Math.min(0, off) - M} ${BW + M * 2} ${H + M * 2}`);
+  for (const it of items) {
+    const tx = it.x - it.bx * it.k, ty = it.y + shift - it.by * it.k;
+    const g = el('g', { transform: `translate(${tx} ${ty}) scale(${it.k})` }, svg);
+    const d = it.parts.map(q => path(q.p)).join('') + (it.p.holes || []).filter(h => Math.abs(polyA(pts(h))) > 1).map(path).join('');
+    const e = el('path', { d, class: 'pc' + (state.sel === it.p.name ? ' sel' : '') + (it.p.holes && it.p.holes.length ? ' holey' : ''), fill: `var(--r-${regionOf(it.p.name)})`, 'vector-effect': 'non-scaling-stroke' }, g);
+    e.addEventListener('click', () => select(it.p.name));
+    if (it.side > 26) { const c = centroid(pts(it.parts[0].p)); const t = el('text', { x: tx + c[0] * it.k, y: ty + c[1] * it.k, class: 'plbl' }, svg); t.textContent = it.p.name; }
+  }
+  el('path', { d: `M0 ${Math.min(0, off) - 2} V${BH} H${BW} V${Math.min(0, off) - 2}`, class: 'wall' }, svg);
+  const big = items[0], small = items[items.length - 1];
+  const sumA = items.reduce((s, it) => s + it.side * it.side, 0);
+  $('stats').innerHTML =
+    `<div class="stat"><b>${items.length}</b><span>ピース数</span></div>` +
+    `<div class="stat"><b>${fmt(big.side / small.side)}倍</b><span>最大÷最小（辺）<br>${big.p.name}÷${small.p.name}</span></div>` +
+    `<div class="stat"><b>${Math.round(100 * sumA / (BW * BH))}%</b><span>ピースの合計面積<br>÷箱の面積</span></div>`;
+}
+
+// ---------- checks ----------
+function drawChecks() {
+  const all = pieces(), adj = adjacency();
+  const deg = {}; for (const p of all) deg[p.name] = 0; for (const [a, b] of adj) { deg[a]++; deg[b]++; }
+  const lonely = all.filter(p => !deg[p.name]).map(p => p.name);
+  const holey = all.filter(p => p.holes && p.holes.some(h => Math.abs(polyA(pts(h))) > 1));
+  const dropped = all.map(p => ({ n: p.name, lost: p.parts.filter((q, i) => i > 0 && q.a < state.isl).reduce((s, q) => s + q.a, 0), tot: p.parts.reduce((s, q) => s + q.a, 0) })).filter(r => r.lost / r.tot > 0.05).sort((a, b) => b.lost / b.tot - a.lost / a.tot);
+  const multi = all.filter(p => keptParts(p).length > 1).map(p => `${p.name}（${keptParts(p).length}）`);
+  const items = [];
+  if (holey.length) items.push(['ng', '穴あきピースがある', `${holey.map(p => p.name).join('、')}が府中町をぐるりと囲むので、ピースに府中町の形の穴が開きます。matter.js は穴のある形を扱えないので、何か工夫が要ります。`]);
+  else items.push(['ok', '穴あきピースなし', '府中町は東区・南区・安芸区のすき間にはまるので、どのピースにも穴は開きません。']);
+  items.push(['note', `陸でつながらないピース ${lonely.length} 個`, `${lonely.join('、')}。北海道–青森と同じように、海をまたぐ隣接（赤い点線）を手で設定します：${DATA.sea.map(e => e.join('–')).join('、')}。`]);
+  items.push(['note', `隣接の組み合わせ ${adj.length + DATA.sea.length} 組`, `陸の境界 ${adj.length} 組と海 ${DATA.sea.length} 組です。元の日本版は 47 県で 92 組でした。`]);
+  items.push(['note', `島をいっしょに持つピース ${multi.length} 個`, multi.length ? `${multi.join('、')}。島は、ピースの一部として本土との位置関係そのままに持たせます（matter.js の複合ボディ）。` : '島は全部落としています。']);
+  if (dropped.length) items.push(['ng', '島を落として形が大きく変わる市町', dropped.map(r => `${r.n}（${Math.round(100 * r.lost / r.tot)}%減）`).join('、') + '。「ピースに入れる島」の下限を下げると残せます。']);
+  $('checks').innerHTML = items.map(([k, t, d]) => `<li><span class="pill ${k}">${k === 'ng' ? '要対応' : k === 'ok' ? 'OK' : 'メモ'}</span><p><b>${t}</b><small>${d}</small></p></li>`).join('');
+}
+
+// ---------- info ----------
+function select(name) {
+  state.sel = state.sel === name ? null : name;
+  render();
+  if (!state.sel) { $('info').textContent = '市町をタップすると、面積と隣接先が出ます。'; return; }
+  const p = pieces().find(q => q.name === name);
+  const nb = adjacency().filter(e => e.includes(name)).map(e => e[0] === name ? e[1] : e[0]);
+  const sea = DATA.sea.filter(e => e.includes(name)).map(e => (e[0] === name ? e[1] : e[0]) + '（海）');
+  const tot = p.parts.reduce((s, q) => s + q.a, 0);
+  const kept = keptParts(p);
+  $('info').innerHTML = `<b>${name}</b>　${fmt(tot)} km²　本土 ${Math.round(100 * p.parts[0].a / tot)}%・陸地 ${p.parts.length} つ（うちピースに入る ${kept.length}）<br>隣接：${nb.concat(sea).join('、') || 'なし'}`;
+}
+
+function render() {
+  for (const b of ['23', '30']) $('v' + b).setAttribute('aria-pressed', String(state.v === b));
+  $('exp').value = state.exp; $('expOut').textContent = (+state.exp).toFixed(2);
+  $('isl').value = state.isl; $('islOut').textContent = state.isl;
+  $('edges').checked = state.edges;
+  drawMap(); drawLegend(); drawBox(); drawChecks(); save();
+}
+$('v23').onclick = () => { state.v = '23'; state.sel = null; $('info').textContent = '市町をタップすると、面積と隣接先が出ます。'; render(); };
+$('v30').onclick = () => { state.v = '30'; state.sel = null; $('info').textContent = '市町をタップすると、面積と隣接先が出ます。'; render(); };
+$('exp').oninput = e => { state.exp = +e.target.value; render(); };
+$('isl').oninput = e => { state.isl = +e.target.value; render(); };
+$('edges').onchange = e => { state.edges = e.target.checked; render(); };
+render();
+})();
+</script>
